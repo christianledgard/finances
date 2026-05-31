@@ -1,0 +1,20 @@
+[project]
+name = "finances-db"
+version = "0.1.0"
+description = "Shared MongoDB client, models and repository for the finances monorepo"
+requires-python = ">=3.11"
+dependencies = [
+    "motor>=3.4.0",
+    "pydantic>=2.7.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+finances-enrich = "finances_db.cli:run_enrich"
+finances-uncategorized = "finances_db.cli:run_uncategorized"
+
+[tool.hatch.build.targets.wheel]
+packages = ["finances_db"]

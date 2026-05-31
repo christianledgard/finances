@@ -1,0 +1,54 @@
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      - "27017:27017"
+
+  extractor:
+    build:
+      context: .
+      dockerfile: apps/extractor/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - apps/extractor/.env
+    environment:
+      MONGODB_URI: mongodb://mongo:27017
+      MONGODB_DB: finances
+      PORT: 8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongo
+
+  # Opt-in: `docker compose --profile tools run --rm scheduler` to trigger a sync locally.
+  scheduler:
+    build:
+      context: ./apps/scheduler
+    profiles: ["tools"]
+    environment:
+      EXTRACTOR_URL: http://extractor:8000
+    depends_on:
+      - extractor
+
+  # Opt-in: `docker compose --profile mcp up mcp` (requires apps/mcp/.env)
+  mcp:
+    build:
+      context: .
+      dockerfile: apps/mcp/Dockerfile
+    profiles: ["mcp"]
+    env_file:
+      - apps/mcp/.env
+    environment:
+      EXTRACTOR_URL: http://extractor:8000
+      PORT: 9000
+      PUBLIC_URL: http://localhost:9000
+    ports:
+      - "9000:9000"
+    depends_on:
+      - extractor
+
+volumes:
+  mongo-data:

@@ -1,0 +1,20 @@
+{
+  "name": "finances",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Personal finances monorepo — EnableBanking (ING NL) extractor + MongoDB",
+  "scripts": {
+    "dev": "mprocs",
+    "dev:parallel": "pnpm --filter extractor --filter @finances/web --filter mcp dev",
+    "start": "pnpm --filter extractor start",
+    "install:py": "pnpm -r run install:py",
+    "extractor": "pnpm --filter extractor",
+    "web": "pnpm --filter @finances/web",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down",
+    "mcp": "pnpm --filter mcp"
+  },
+  "devDependencies": {
+    "mprocs": "^0.9.4"
+  }
+}

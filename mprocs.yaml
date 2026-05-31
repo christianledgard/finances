@@ -1,0 +1,14 @@
+# TUI for local dev — arrow keys / j-k to switch services, q to quit.
+# Run: pnpm dev
+procs:
+  extractor:
+    shell: pnpm --filter extractor dev
+    autostart: true
+
+  web:
+    shell: pnpm --filter @finances/web dev
+    autostart: true
+
+  mcp:
+    shell: pnpm --filter mcp dev
+    autostart: true

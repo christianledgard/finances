@@ -1,0 +1,24 @@
+[project]
+name = "extractor"
+version = "0.1.0"
+description = "EnableBanking (ING NL) extractor — daily bank movements into MongoDB"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.111.0",
+    "uvicorn[standard]>=0.30.0",
+    "httpx>=0.27.0",
+    "PyJWT[crypto]>=2.8.0",
+    "python-dotenv>=1.0.0",
+    "python-multipart>=0.0.9",
+    "finances-db",
+]
+
+[tool.uv.sources]
+finances-db = { path = "../../packages/db", editable = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+bypass-selection = true

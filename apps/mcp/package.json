@@ -1,0 +1,11 @@
+{
+  "name": "mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Remote read-only MCP server for finances (Python/FastMCP)",
+  "scripts": {
+    "install:py": "uv sync",
+    "dev": "uv run finances-mcp",
+    "start": "uv run finances-mcp"
+  }
+}
