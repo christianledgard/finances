@@ -14,6 +14,13 @@ export interface MonthData {
 const eur = (v: number) =>
   new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(v)
 
+const eur0 = (v: number) =>
+  new Intl.NumberFormat('nl-NL', {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 0,
+  }).format(v)
+
 export function MonthlyChart({ data }: { data: MonthData[] }) {
   const totalCredit = data.reduce((s, d) => s + d.credit, 0)
   const totalDebit = data.reduce((s, d) => s + d.debit, 0)
@@ -22,10 +29,10 @@ export function MonthlyChart({ data }: { data: MonthData[] }) {
   const onTrack = savingsRate >= 0.2
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-      <StatCard label="Total Income" value={eur(totalCredit)} valueClassName="text-emerald-600 dark:text-emerald-400" />
-      <StatCard label="Total Expenses" value={eur(totalDebit)} valueClassName="text-rose-600 dark:text-rose-400" />
-      <Card className="col-span-2 sm:col-span-1">
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <StatCard label="Total Income" value={eur0(totalCredit)} valueClassName="text-emerald-600 dark:text-emerald-400" />
+      <StatCard label="Total Expenses" value={eur0(totalDebit)} valueClassName="text-rose-600 dark:text-rose-400" />
+      <Card className="col-span-2 md:col-span-1">
         <CardHeader className="pb-1">
           <CardDescription>Savings Rate</CardDescription>
         </CardHeader>

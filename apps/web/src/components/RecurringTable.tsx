@@ -88,8 +88,8 @@ export function RecurringTable({ data }: { data: SubscriptionsData }) {
           <TableBody>
             {data.items.map((row) => (
               <TableRow key={row.counterparty}>
-                <TableCell className="px-6 font-medium capitalize text-foreground">
-                  {row.counterparty}
+                <TableCell className="px-6 font-medium capitalize text-foreground max-w-[160px] sm:max-w-[280px]">
+                  <span className="block truncate">{row.counterparty}</span>
                 </TableCell>
                 <TableCell className="px-3 text-muted-foreground hidden sm:table-cell">
                   {labelFor(row.category)}
