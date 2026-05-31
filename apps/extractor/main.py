@@ -41,9 +41,11 @@ from finances_db import (
     save_session,
     savings_tracker,
     transactions_by_category,
+    transactions_raw_for_month,
     update_rule,
     upsert_transaction,
 )
+from finances_db.repository import _require_rule_predicates
 from finances_db.amex_csv import AMEX_ACCOUNT_UID, parse_amex_csv
 from pydantic import BaseModel as PydanticBaseModel
 
@@ -478,7 +480,10 @@ async def add_rule(body: RuleCreate):
 async def edit_rule(rule_id: str, body: RuleUpdate):
     """Update an existing rule (partial update)."""
     patch = {k: v for k, v in body.model_dump().items() if v is not None}
-    rule = await update_rule(rule_id, patch)
+    try:
+        rule = await update_rule(rule_id, patch)
+    except ValueError as exc:
+        raise HTTPException(400, detail=str(exc))
     if rule is None:
         raise HTTPException(404, detail=f"Rule '{rule_id}' not found")
     return {"rule": rule}
@@ -498,6 +503,57 @@ async def reorder(body: ReorderBody):
     """Reorder rules by providing the full ordered list of rule_ids."""
     n = await reorder_rules(body.ordered_rule_ids)
     return {"reordered": n}
+
+
+class RulePreviewBody(PydanticBaseModel):
+    month: str                              # required YYYY-MM
+    counterparty_contains: list[str] = []
+    remittance_contains: list[str] = []
+    btc_contains: list[str] = []
+    indicator: str | None = None
+
+
+@app.post("/rules/preview", dependencies=[Depends(_require_api_key)])
+async def preview_rule(body: RulePreviewBody):
+    """Dry-run a draft rule against one month of transactions. Nothing is persisted.
+
+    Returns the transactions that would be matched — use this to validate predicates
+    before calling POST /rules to create the real rule.
+    """
+    from finances_db.rules import Rule, _counterparty, _amount, _direction
+
+    try:
+        _require_rule_predicates(body.model_dump())
+    except ValueError as exc:
+        raise HTTPException(400, detail=str(exc))
+
+    rule = Rule(
+        rule_id="__preview__",
+        category="preview",
+        counterparty_contains=tuple(body.counterparty_contains),
+        remittance_contains=tuple(body.remittance_contains),
+        btc_contains=tuple(body.btc_contains),
+        indicator=body.indicator,
+    )
+
+    txns = await transactions_raw_for_month(body.month)
+    matches = []
+    for txn in txns:
+        if rule.matches(txn):
+            matches.append({
+                "transaction_id": txn.get("transaction_id"),
+                "date": (txn.get("openbanking") or {}).get("booking_date"),
+                "amount": _amount(txn),
+                "direction": _direction(txn),
+                "counterparty": _counterparty(txn),
+            })
+
+    return {
+        "month": body.month,
+        "matched_count": len(matches),
+        "total_in_month": len(txns),
+        "matches": matches,
+    }
 
 
 @app.get("/transactions/uncategorized", dependencies=[Depends(_require_api_key)])

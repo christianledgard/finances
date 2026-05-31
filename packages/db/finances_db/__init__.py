@@ -25,6 +25,7 @@ from .repository import (
     savings_tracker,
     set_enrichment,
     transactions_by_category,
+    transactions_raw_for_month,
     update_rule,
     upsert_transaction,
 )
@@ -62,6 +63,7 @@ __all__ = [
     "savings_tracker",
     "set_enrichment",
     "transactions_by_category",
+    "transactions_raw_for_month",
     "upsert_transaction",
     # repository — rules
     "create_rule",

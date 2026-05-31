@@ -451,6 +451,7 @@ async def transactions_by_category(month: str) -> list[dict]:
                 "counterparty": {"$ifNull": ["$enrichment.counterparty", None]},
                 "is_transfer": {"$ifNull": ["$enrichment.is_transfer", False]},
                 "is_recurring": {"$ifNull": ["$enrichment.is_recurring", False]},
+                "rule_id": "$enrichment.rule_id",
             }
         },
         {"$sort": {"amount_val": -1}},
@@ -465,6 +466,7 @@ async def transactions_by_category(month: str) -> list[dict]:
                 "counterparty": 1,
                 "is_transfer": 1,
                 "is_recurring": 1,
+                "rule_id": 1,
                 "description": {
                     "$arrayElemAt": ["$openbanking.remittance_information", 0]
                 },
@@ -679,6 +681,19 @@ async def recurring_subscriptions() -> dict:
 # Rules CRUD
 # ---------------------------------------------------------------------------
 
+async def transactions_raw_for_month(month: str) -> list[dict]:
+    """Return raw transaction documents for a YYYY-MM month.
+
+    Returns only the fields needed by Rule.matches() — openbanking payload +
+    transaction_id. Used by the rule preview (dry-run) endpoint.
+    """
+    db = get_db()
+    return await db.transactions.find(
+        {"openbanking.booking_date": {"$regex": f"^{month}"}},
+        {"_id": 0, "transaction_id": 1, "openbanking": 1},
+    ).to_list(length=None)
+
+
 async def list_rule_docs(include_disabled: bool = True) -> list[dict]:
     """Return all rule documents sorted by order ascending."""
     db = get_db()
@@ -693,6 +708,19 @@ async def get_rules_for_engine():
     return [rule_from_doc(doc) for doc in docs]
 
 
+def _require_rule_predicates(doc: dict) -> None:
+    """Rules with no predicates match every transaction — reject at write time."""
+    if not any(
+        doc.get(k)
+        for k in ("counterparty_contains", "remittance_contains", "btc_contains")
+    ):
+        raise ValueError(
+            "A rule must have at least one non-empty predicate list "
+            "(counterparty_contains, remittance_contains, or btc_contains). "
+            "A rule with no predicates would match ALL transactions."
+        )
+
+
 async def create_rule(doc: dict) -> dict:
     """Insert a new rule. Assigns order=max+1000 if not provided.
 
@@ -701,6 +729,7 @@ async def create_rule(doc: dict) -> dict:
     from .models import RuleDoc
     from pymongo.errors import DuplicateKeyError
     validated = RuleDoc(**doc)
+    _require_rule_predicates(validated.model_dump())
     db = get_db()
     now = datetime.now(timezone.utc)
 
@@ -725,7 +754,13 @@ async def create_rule(doc: dict) -> dict:
 async def update_rule(rule_id: str, patch: dict) -> dict | None:
     """Patch an existing rule by rule_id. Returns the updated doc or None if not found."""
     db = get_db()
+    existing = await db.rules.find_one({"rule_id": rule_id}, {"_id": 0})
+    if existing is None:
+        return None
+
     patch = {k: v for k, v in patch.items() if k not in ("_id", "rule_id")}
+    _require_rule_predicates({**existing, **patch})
+
     patch["updated_at"] = datetime.now(timezone.utc)
     result = await db.rules.update_one({"rule_id": rule_id}, {"$set": patch})
     if result.matched_count == 0:
