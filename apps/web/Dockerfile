@@ -31,6 +31,14 @@ COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/web ./apps/web
 ENV NEXT_TELEMETRY_DISABLED=1
+# NEXT_PUBLIC_* vars are inlined into the client bundle at BUILD time, so they
+# must be present here — Railway only injects service variables at runtime.
+# Declare them as build args (Railway passes matching service vars as build
+# args automatically) and re-export to ENV so `next build` can read them.
+ARG NEXT_PUBLIC_SALARY_CAP
+ARG NEXT_PUBLIC_APP_NAME
+ENV NEXT_PUBLIC_SALARY_CAP=$NEXT_PUBLIC_SALARY_CAP \
+    NEXT_PUBLIC_APP_NAME=$NEXT_PUBLIC_APP_NAME
 # The placeholder secret only lets betterAuth/MongoClient be constructed during
 # the build's page-data collection; it is scoped to this RUN (not persisted in
 # the image). Real values are supplied by Railway at runtime.
