@@ -148,7 +148,11 @@ def create_app(settings: Settings) -> FastMCP:
         order: int | None = None,
         enabled: bool = True,
     ) -> dict:
-        """⚠️  Confirm with the user before calling. Show the exact rule and which
+        """⚠️  Only call this when no existing rule covers the category. In most cases,
+        use update_rule() to add a new match term to an existing rule — that keeps the
+        rule set minimal. Call list_rules() first and check before creating anything new.
+
+        ⚠️  Confirm with the user before calling. Show the exact rule and which
         transactions it will affect, and only proceed once they approve. After all rule
         changes are done, call apply_rules() once.
 
@@ -301,6 +305,11 @@ def create_app(settings: Settings) -> FastMCP:
             "2. Check the rules. Call list_rules() to see what exists and in what order. "
             "Lower order runs first and the first matching rule wins, so to beat a broad rule "
             "your new one needs a lower order.\n\n"
+
+            "2b. Prefer editing over creating. The vast majority of requests — adding a new "
+            "merchant to an existing category, fixing a wrong match — are best handled with "
+            "update_rule(), not create_rule(). Only create a new rule when no existing rule "
+            "covers the category at all. When in doubt, extend an existing rule.\n\n"
 
             "3. Plan. For each change, note the rule_id, category, match terms (lowercase), order, "
             "and which transactions move and to which category. If a transaction is ambiguous, ask "
