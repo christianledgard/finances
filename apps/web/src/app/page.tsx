@@ -70,6 +70,15 @@ export default async function Dashboard() {
           </>
         )}
       </main>
+
+      {/* Footer — sign out lives here since there's only one user */}
+      <footer className="max-w-5xl mx-auto px-4 sm:px-6 pb-10 flex justify-start">
+        <SignOutButton
+          variant="link"
+          size="sm"
+          className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+        />
+      </footer>
     </div>
   )
 }

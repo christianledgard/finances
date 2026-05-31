@@ -123,14 +123,14 @@ export function CategoryBreakdown({ data }: { data: CategoryRow[] }) {
           Income vs Expenses by Category
         </CardTitle>
         <CardDescription>
-          Housing = net (rent − roommate + electricity + water) · Income bar shows salary
+          Housing shown net of roommate contribution
         </CardDescription>
         <CardAction>
           <Link
             href="/transactions"
             className="text-xs text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors flex items-center gap-1"
           >
-            View all transactions
+            View transactions
             <span aria-hidden>→</span>
           </Link>
         </CardAction>

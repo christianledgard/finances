@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { SignOutButton } from '@/components/SignOutButton'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { APP_NAME } from '@/lib/config'
 
@@ -50,7 +49,6 @@ export function AppNav({ user, breadcrumb }: AppNavProps) {
             {user.email}
           </span>
           <ThemeToggle />
-          <SignOutButton />
         </nav>
       </div>
     </header>

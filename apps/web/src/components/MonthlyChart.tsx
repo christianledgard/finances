@@ -22,10 +22,10 @@ export function MonthlyChart({ data }: { data: MonthData[] }) {
   const onTrack = savingsRate >= 0.2
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
       <StatCard label="Total Income" value={eur(totalCredit)} valueClassName="text-emerald-600 dark:text-emerald-400" />
       <StatCard label="Total Expenses" value={eur(totalDebit)} valueClassName="text-rose-600 dark:text-rose-400" />
-      <Card>
+      <Card className="col-span-2 sm:col-span-1">
         <CardHeader className="pb-1">
           <CardDescription>Savings Rate</CardDescription>
         </CardHeader>
