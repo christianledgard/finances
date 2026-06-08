@@ -26,6 +26,7 @@ from finances_db import (
     create_rule,
     delete_rule,
     enrich_all_from_db,
+    enrich_new_from_db,
     ensure_indexes,
     get_uncategorized_transactions,
     is_admin_user,
@@ -79,6 +80,7 @@ class SyncJob:
     total_days: int
     processed: int = 0
     saved: int = 0
+    enriched: int = 0
     current_day: str | None = None
     synced_dates: list[str] = field(default_factory=list)
     failed_dates: list[str] = field(default_factory=list)
@@ -293,6 +295,12 @@ async def _run_sync(job: SyncJob, sessions: list[dict], days: list[str], today: 
         return
     job.status = "done"
     job.current_day = None
+    # Auto-enrich the freshly-synced transactions. Kept in its own try/except so
+    # an enrichment hiccup never flips a successful sync to "failed".
+    try:
+        job.enriched = await enrich_new_from_db()
+    except Exception as exc:
+        job.error = f"sync ok, enrich failed: {exc}"
 
 
 @app.post("/sync")
@@ -350,6 +358,7 @@ async def sync_status(job_id: str):
         "processed": job.processed,
         "current_day": job.current_day,
         "saved": job.saved,
+        "enriched": job.enriched,
         "synced_dates": job.synced_dates,
         "failed_dates": job.failed_dates,
         "error": job.error,
@@ -580,7 +589,7 @@ async def import_amex_csv(file: UploadFile = File(...)):
     Accepts multipart/form-data with a single file field named 'file'.
     Idempotent: uploading the same CSV twice produces no duplicate documents.
 
-    Call POST /enrich afterwards to classify the imported transactions.
+    Newly-imported transactions are auto-enriched before returning.
     """
     raw = (await file.read()).decode("utf-8-sig")
     try:
@@ -603,10 +612,11 @@ async def import_amex_csv(file: UploadFile = File(...)):
         rows.append((tid, AMEX_ACCOUNT_UID, item["openbanking"]))
 
     inserted, updated, _ = await bulk_upsert_transactions(rows)
+    enriched = await enrich_new_from_db()
     return {
         "inserted": inserted,
         "updated": updated,
         "skipped_duplicate": skipped,
         "total_rows": len(parsed),
-        "note": "Call POST /enrich to classify the imported transactions.",
+        "enriched": enriched,
     }

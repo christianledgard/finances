@@ -142,6 +142,15 @@ async def iter_all_transactions(projection: dict | None = None) -> list[dict]:
     return await db.transactions.find({}, proj).to_list(length=None)
 
 
+async def unenriched_transaction_ids() -> set[str]:
+    """Return transaction_ids that have no enrichment object yet."""
+    db = get_db()
+    docs = await db.transactions.find(
+        {"enrichment": {"$exists": False}}, {"_id": 0, "transaction_id": 1}
+    ).to_list(length=None)
+    return {d["transaction_id"] for d in docs}
+
+
 async def mark_day_synced(date: str) -> None:
     """Record that a calendar day was fully synced."""
     db = get_db()

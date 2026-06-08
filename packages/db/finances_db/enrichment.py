@@ -84,3 +84,23 @@ async def enrich_all_from_db(txns: list[dict]) -> list[tuple[str, dict]]:
     from .repository import get_rules_for_engine
     rules = await get_rules_for_engine()
     return enrich_all(txns, rules)
+
+
+async def enrich_new_from_db() -> int:
+    """Enrich only transactions that lack an enrichment object.
+
+    Uses the full transaction set as context for recurring detection but writes
+    enrichment only for documents that don't have it yet. Returns docs written.
+    """
+    from .repository import (
+        bulk_set_enrichment,
+        iter_all_transactions,
+        unenriched_transaction_ids,
+    )
+    new_ids = await unenriched_transaction_ids()
+    if not new_ids:
+        return 0
+    txns = await iter_all_transactions()
+    updates = await enrich_all_from_db(txns)
+    to_write = [(tid, e) for tid, e in updates if tid in new_ids]
+    return await bulk_set_enrichment(to_write)
