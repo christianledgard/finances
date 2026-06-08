@@ -1,7 +1,7 @@
 """finances_db — shared MongoDB layer for the finances monorepo."""
 from .authz import AUTHORIZED_ROLE, is_admin_user
 from .client import close, get_client, get_db
-from .enrichment import enrich_all_from_db
+from .enrichment import enrich_all_from_db, enrich_new_from_db
 from .models import Account, Enrichment, RuleDoc, Session, Transaction
 from .repository import (
     bulk_set_enrichment,
@@ -26,6 +26,7 @@ from .repository import (
     set_enrichment,
     transactions_by_category,
     transactions_raw_for_month,
+    unenriched_transaction_ids,
     update_rule,
     upsert_transaction,
 )
@@ -46,6 +47,7 @@ __all__ = [
     "Transaction",
     # enrichment (DB-aware)
     "enrich_all_from_db",
+    "enrich_new_from_db",
     # repository — transactions
     "bulk_set_enrichment",
     "bulk_upsert_transactions",
@@ -64,6 +66,7 @@ __all__ = [
     "set_enrichment",
     "transactions_by_category",
     "transactions_raw_for_month",
+    "unenriched_transaction_ids",
     "upsert_transaction",
     # repository — rules
     "create_rule",
